@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+aicsimageio = "3.3.4"
+pillow = "8.3.1"
+spex-common = {editable = true, path = "./../common"}
+requests = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
