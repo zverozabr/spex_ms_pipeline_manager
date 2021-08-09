@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED = 1
 COPY ./common ./common
 
 WORKDIR /app
-COPY ./ms-collector /app
+COPY ./ms-pipeline-manager /app
 
 RUN pip install pipenv && pipenv install --system --deploy --ignore-pipfile && pip install -e ./../common/
 

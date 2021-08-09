@@ -20,7 +20,7 @@ def update_tasks_to_start_from_pending(data, status, _session):
     if status == 100:
         for box in data['boxes']:
             for _task in box['tasks']:
-                if _task['status'] == -1:
+                if _task['status'] in [-1]:
                     resp = _session.put(url=f'{base_url}tasks/{_task.get("id")}', json={'status': 0})
                     if resp.status_code != 200:
                         print(f'error on update task: {task}')
@@ -44,7 +44,7 @@ def recursion(data, _session, project):
 
 
 def get_box():
-    lines = db_instance().select(collection, ' FILTER doc.complete < 100  LIMIT 1 ')
+    lines = db_instance().select(collection, ' FILTER doc.complete < 100')
     ses = requests.session()
     resp = ses.post(url=f'{base_url}users/login', json={"username": os.getenv('BACKEND_LOGIN'), 'password': os.getenv('BACKEND_PASSWORD')})
     if resp.status_code == 200:
