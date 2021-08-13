@@ -11,14 +11,14 @@ collection = 'pipeline'
 
 def update_tasks_to_start_from_pending(data, status, _session):
     if status < 100:
-        for box in data['boxes']:
+        for box in data['jobs']:
             for _task in box['tasks']:
                 if _task['status'] < 100 and _task['status'] != -1:
                     resp = _session.put(url=f'{base_url}tasks/{_task.get("id")}', json={'status': -1})
                     if resp.status_code != 200:
                         print(f'error on update task: {task}')
     if status == 100:
-        for box in data['boxes']:
+        for box in data['jobs']:
             for _task in box['tasks']:
                 if _task['status'] in [-1]:
                     resp = _session.put(url=f'{base_url}tasks/{_task.get("id")}', json={'status': 0})
@@ -26,21 +26,21 @@ def update_tasks_to_start_from_pending(data, status, _session):
                         print(f'error on update task: {task}')
 
 
-def update_box_status(data, status, _session, project):
+def update_box_status(data, status, _session):
     update_tasks_to_start_from_pending(data, status, _session)
     if data.get('status') != int(round(status, 0)):
-        resp = _session.put(url=f'{base_url}pipeline/update/{project}/{data.get("id")}', json={'complete': int(round(status, 0))})
+        resp = _session.put(url=f'{base_url}jobs/{data.get("id")}', json={'status': int(round(status, 0))})
         if resp.status_code != 200:
             print(f'error on update: {data}')
 
 
-def recursion(data, _session, project):
+def recursion(data, _session):
     if tasks := data.get('tasks'):
         box_status = 0 if sum(item['status'] for item in tasks) / len(tasks) < 0 else sum(item['status'] for item in tasks) / len(tasks)
-        update_box_status(data, box_status, _session, project)
-    if len(data['boxes']) > 0:
-        for item in data['boxes']:
-            recursion(item, _session, project)
+        update_box_status(data, box_status, _session)
+    if len(data['jobs']) > 0:
+        for item in data['jobs']:
+            recursion(item, _session)
 
 
 def get_box():
@@ -50,11 +50,11 @@ def get_box():
     if resp.status_code == 200:
         ses.headers = {'Authorization': f'Bearer {resp.headers.get("authorization")}'}
         for line in lines:
-            line_resp = ses.get(url=f'{base_url}pipeline/path/{ line["project"] }/{ line["_key"] }')
+            line_resp = ses.get(url=f'{base_url}pipeline/path/{ line["_key"] }')
             if line_resp.status_code == 200:
                 data = line_resp.json()
                 if data["success"] is True:
-                    recursion(data["data"]["pipelines"][0], _session=ses, project=line["project"])
+                    recursion(data["data"]["pipelines"][0], _session=ses)
     print(resp, lines)
 
 
@@ -63,3 +63,4 @@ if __name__ == '__main__':
     base_url = os.getenv("BACKEND_URL")
 
     every(10, get_box)
+
