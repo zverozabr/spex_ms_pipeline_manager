@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 aicsimageio = "3.3.4"
 pillow = "8.3.1"
-spex-common = {editable = true, path = "./../common"}
+spex-common = {editable = true, path = "../common"}
 requests = "*"
 
 [dev-packages]

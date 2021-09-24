@@ -4,11 +4,12 @@ USER root
 ENV PYTHONDONTWRITEBYTECODE = 1
 ENV PYTHONUNBUFFERED = 1
 
-COPY ./common ./common
+COPY ./microservices/ms-pipeline-manager /app/services/app
+COPY ./common /app/common
 
-WORKDIR /app
-COPY ./ms-pipeline-manager /app
+WORKDIR /app/services/app
 
-RUN pip install pipenv && pipenv install --system --deploy --ignore-pipfile && pip install -e ./../common/
+RUN pip install pipenv && pipenv install --system --deploy --ignore-pipfile
+RUN pip install -e /app/common
 
 CMD ["python", "app.py"]

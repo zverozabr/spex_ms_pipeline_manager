@@ -475,10 +475,6 @@
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==1.16.0"
         },
-        "spex-common": {
-            "editable": true,
-            "path": "./../common"
-        },
         "tifffile": {
             "hashes": [
                 "sha256:c96e7497b1037897c726d8f8284653af3437d2cd58ef68d44cf65f02020910a0",
