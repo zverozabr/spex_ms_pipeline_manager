@@ -60,8 +60,7 @@ def get_box():
     lines = db_instance().select(collection, " FILTER doc.complete < 100")
     for line in lines:
         if data := PipelineService.get_tree(line["_key"]):
-            if data[0]["_id"] == "pipeline/85862992":
-                recursion(data[0], first=True)
+            recursion(data[0], first=True)
     logger.info("pipeline manager working")
 
 
