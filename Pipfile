@@ -4,10 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aicsimageio = "3.3.4"
-pillow = "8.3.1"
-spex-common = {editable = true, path = "../common"}
-requests = "*"
+spex-common = {editable = true, path = "./../../common"}
 
 [dev-packages]
 

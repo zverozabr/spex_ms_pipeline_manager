@@ -10,6 +10,5 @@ COPY ./common /app/common
 WORKDIR /app/services/app
 
 RUN pip install pipenv && pipenv install --system --deploy --ignore-pipfile
-RUN pip install -e /app/common
 
 CMD ["python", "app.py"]
