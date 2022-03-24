@@ -76,10 +76,8 @@ def get_box():
         logger.debug(f"processing pipeline: {line['_key']}")
         if data := PipelineService.get_tree(line["_key"]):
             status = None
-            if data[0].get("status") == PipelineText.stopped.value:
-                status = PipelineText.stopped.value
-            elif data[0].get("status") == PipelineText.started.value:
-                status = PipelineText.started.value
+            if data[0].get("status") in [PipelineText.stopped.value, PipelineText.started.value]:
+                status = data[0].get("status")
 
             recursion(data[0], first=True, _status=status)
 
