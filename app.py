@@ -5,6 +5,7 @@ from spex_common.services.Timer import every
 import spex_common.services.Pipeline as PipelineService
 import spex_common.services.Job as JobService
 import spex_common.services.Task as TaskService
+from spex_common.models.Status import PipelineText
 import logging
 
 logger = get_logger("pipeline_manager")
@@ -47,7 +48,7 @@ def update_box_status(data, status, first):
     JobService.update_job(data.get("id"), _data)
 
 
-def recursion(data, first=False):
+def recursion(data, first=False, _status: int = None):
     if data is None:
         return
 
@@ -56,13 +57,15 @@ def recursion(data, first=False):
         status = sum(item.get("status") for item in tasks) / len(tasks)
         status = int(round(status, 0))
         status = max(0, min(status, 100))
+        if _status:
+            status = _status
         update_box_status(data, status, first)
 
     if len(data.get("jobs", [])) < 1:
         return
 
     for item in data.get("jobs", []):
-        recursion(item)
+        recursion(item, first=False, _status=_status)
 
 
 def get_box():
@@ -72,7 +75,14 @@ def get_box():
     for line in lines:
         logger.debug(f"processing pipeline: {line['_key']}")
         if data := PipelineService.get_tree(line["_key"]):
-            recursion(data[0], first=True)
+            status = None
+            if data[0].get("status") == PipelineText.stopped.value:
+                status = PipelineText.stopped.value
+            elif data[0].get("status") == PipelineText.started.value:
+                status = PipelineText.started.value
+
+            recursion(data[0], first=True, _status=status)
+
             job_ids = PipelineService.get_jobs(data[0].get('jobs', []))
             jobs = JobService.select_jobs(condition="in", _id=job_ids)
             pipeline_status = 0
