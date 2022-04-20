@@ -5,6 +5,7 @@ from spex_common.services.Timer import every
 import spex_common.services.Pipeline as PipelineService
 import spex_common.services.Job as JobService
 import spex_common.services.Task as TaskService
+from spex_common.models.Status import PipelineText
 import logging
 
 logger = get_logger("pipeline_manager")
@@ -47,7 +48,7 @@ def update_box_status(data, status, first):
     JobService.update_job(data.get("id"), _data)
 
 
-def recursion(data, first=False):
+def recursion(data, first=False, _status: int = None):
     if data is None:
         return
 
@@ -56,45 +57,45 @@ def recursion(data, first=False):
         status = sum(item.get("status") for item in tasks) / len(tasks)
         status = int(round(status, 0))
         status = max(0, min(status, 100))
+        if _status:
+            status = _status
         update_box_status(data, status, first)
 
     if len(data.get("jobs", [])) < 1:
         return
 
     for item in data.get("jobs", []):
-        recursion(item)
+        recursion(item, first=False, _status=_status)
 
 
 def get_box():
     logger.info("working")
-    insert_task_result()
     lines = db_instance().select(collection, " FILTER doc.complete < 100")
     logger.info(f"uncompleted pipelines: {len(lines)}")
     for line in lines:
         logger.debug(f"processing pipeline: {line['_key']}")
         if data := PipelineService.get_tree(line["_key"]):
-            recursion(data[0], first=True)
+            status = None
+            if data[0].get("status") in [PipelineText.stopped.value, PipelineText.started.value]:
+                status = data[0].get("status")
 
+            recursion(data[0], first=True, _status=status)
 
-def insert_task_result():
-    jobs = db_instance().select(collection, ' FILTER doc.status == 100 and doc.complete != True ', fields=' doc.parent ')
-    if jobs is not None:
-        for job in jobs:
-            uncompleted_tasks = db_instance().count(collection, search=' FILTER doc.status != 100 and doc.status > 0 and doc.parent == @job and doc.complete != True ', job=str(job))
-
-            if len(uncompleted_tasks) == 1 and uncompleted_tasks[0] == 0:
-                parent = db_instance().select('jobs', ' FILTER doc._key == @jobid ', jobid=str(job))
-
-                if parent:
-                    parent = parent[0]
-                    task_arr = db_instance().select(collection, ' FILTER doc.parent == @jobid and doc.status > 0 and doc.status == 100 and doc.complete != True ', jobid=str(job))
-                    parent.update({'tasks': task_arr})
-                    new = db_instance().insert('resource', parent, overwrite_mode='replace')
-
-                    if new is not None:
-                        for task2 in task_arr:
-                            updated = db_instance().update(collection, search='FILTER doc._key == @taskid', data={'status': 100, 'complete': True}, taskid=str(task2.get('_key')))
-                            logger.info(updated)
+            job_ids = PipelineService.get_jobs(data[0].get('jobs', []))
+            jobs = JobService.select_jobs(condition="in", _id=job_ids)
+            pipeline_status = 0
+            if jobs is not None:
+                for job in jobs:
+                    pipeline_status += job.get('status', 0)
+                pipeline_status = int(round(pipeline_status / len(jobs), 0))
+                if data[0].get("status") != pipeline_status:
+                    updated = PipelineService.update(
+                        data[0].get('id'),
+                        data={"complete": pipeline_status},
+                        collection='pipeline'
+                    )
+                    if updated:
+                        logger.debug(f"processing pipeline: {line['_key']} changed status to: {pipeline_status}")
 
 
 if __name__ == "__main__":
