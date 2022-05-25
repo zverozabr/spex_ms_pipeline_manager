@@ -70,7 +70,7 @@ def recursion(data, first=False, _status: int = None):
 
 def get_box():
     logger.info("working")
-    lines = db_instance().select(collection, " FILTER doc.complete < 100")
+    lines = db_instance().select(collection, " FILTER doc.complete <= 100")
     logger.info(f"uncompleted pipelines: {len(lines)}")
     for line in lines:
         logger.debug(f"processing pipeline: {line['_key']}")
