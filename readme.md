@@ -4,7 +4,7 @@
 
 1. Redis
 
-clone https://code.roche.com/spex/backend into the parent directory.  
+clone spex_backend into the parent directory.  
 ```
 $ cd ./backend/micro-services/redis  
 $ docker build --pull --rm -t spex_redisjson .
